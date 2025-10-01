@@ -1,0 +1,8 @@
+# Virtual environment
+venv/
+
+# Config
+.env
+
+# Dataset
+Engineer_20230826.csv
