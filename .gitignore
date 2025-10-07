@@ -6,3 +6,7 @@ venv/
 
 # Dataset
 Engineer_20230826.csv
+
+# Python bytecode
+    __pycache__/
+    *.pyc
