@@ -6,10 +6,10 @@ import json
 from typing import Optional
 
 
-class GPTJobDescriptionClassifier():
+class GPTJobDescriptionCategorizer():
     def __init__(self, job_postings_data: pd.DataFrame, n_samples: int = 500):
         self.job_postings_data = job_postings_data
-        self.categorized_df = None
+        self.labeled_df = None
         self.n_samples = n_samples
         self.client = self.get_API_client()
 
@@ -43,6 +43,7 @@ Return ONLY a JSON array where each element has:
 """
         return prompt
 
+    # categorizes one job description's sentences into 4 categories
     def categorize_posting(self, posting) -> pd.DataFrame:
         prompt = self.build_prompt(posting["JobDescription"])
 
@@ -66,7 +67,8 @@ Return ONLY a JSON array where each element has:
             print(f"Error calling GPT: {e}")
             return
 
-
+    # runs categorize_posting on every random posting
+    # returns a dataframe where every row is a sentence and its category
     def process_random_postings(self) -> pd.DataFrame:
         random_postings = self.load_data()
 
@@ -79,5 +81,5 @@ Return ONLY a JSON array where each element has:
             df = self.categorize_posting(posting)
             all_dfs.append(df)
 
-        self.categorized_df = pd.concat(all_dfs, ignore_index=True)
-        return self.categorized_df
+        self.labeled_df = pd.concat(all_dfs, ignore_index=True)
+        return self.labeled_df
