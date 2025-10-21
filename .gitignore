@@ -8,5 +8,5 @@ venv/
 Engineer_20230826.csv
 
 # Python bytecode
-    __pycache__/
-    *.pyc
+__pycache__/
+*.pyc
