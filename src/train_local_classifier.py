@@ -20,6 +20,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
 
+import joblib
+
 
 
 # Load the labeled data
@@ -77,6 +79,23 @@ def train_classifier(X_train, y_train, X_test, y_test):
     print(classification_report(y_test, y_pred))
     return clf
 
+""""Save the trained model and vectorizer so we don't have to retrain
+the model every time. We need to save (save_model) both the TF-IDF vectorizers and 
+logistic regression models and be able to find them later (load_model).
+
+We use joblib instead of pickle because it is tailored for ML applications."""
+
+def save_model(clf, vectorizer):
+    joblib.dump(clf, "../data/job_sentence_classifier.pkl")
+    joblib.dump(vectorizer, "../data/tfidf_vectorizer.pkl")
+    print("\n✅ Model and vectorizer saved to disk.")
+
+def load_model():
+    clf = joblib.load("../data/job_sentence_classifier.pkl")
+    vectorizer = joblib.load("../data/tfidf_vectorizer.pkl")
+    print("✅ Model and vectorizer loaded successfully.")
+    return clf, vectorizer
+
 
 if __name__ == "__main__":
     # load the labeled dataset 
@@ -87,3 +106,9 @@ if __name__ == "__main__":
 
     # train the classifier on the training data
     clf = train_classifier(X_train_tfidf, y_train, X_test_tfidf, y_test)
+
+    # test saving the model
+    save_model(clf, vectorizer)
+
+    # test loading the model and vectorizer with the following command:
+    # python -c "import joblib; clf=joblib.load('../data/job_sentence_classifier.pkl'); print('Model loaded!')"
