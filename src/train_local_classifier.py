@@ -17,6 +17,10 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import classification_report
+
+
 
 # Load the labeled data
 def load_labeled_data(path):
@@ -25,9 +29,41 @@ def load_labeled_data(path):
     print(f"Loaded {len(df)} rows")
     print(df.head(3))  # preview a few rows
 
+    # Drop missing or empty sentences so the TF-IDF vectorizer won't throw
+    # errors when null values are encountered
+    df = df.dropna(subset=["sentence", "category"])
+    df = df[df["sentence"].str.strip() != ""]
+    df.reset_index(drop=True, inplace=True)
+
+    print(f"After cleaning: {len(df)} rows remain.")
+
     print("Unique categories:", df["category"].unique())
     return df
 
-# # Testing if loading the data works
-# if __name__ == "__main__":
-#     labeled_df = load_labeled_data("../data/gpt_classified_job_descriptions.csv")
+
+# Split data, create TF-IDF vectors
+def prepare_data(df):
+    """Split data and create TF-IDF vectors."""
+    X = df["sentence"]
+    y = df["category"]
+
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )
+
+    print(f"Train set: {len(X_train)} rows, Test set: {len(X_test)} rows")
+
+    vectorizer = TfidfVectorizer(
+        stop_words="english",
+        ngram_range=(1, 2),
+        max_features=10000
+    )
+
+    X_train_tfidf = vectorizer.fit_transform(X_train)
+    X_test_tfidf = vectorizer.transform(X_test)
+
+    print("TF-IDF vectorizer built.")
+    print(f"Train shape: {X_train_tfidf.shape}, Test shape: {X_test_tfidf.shape}")
+    return X_train_tfidf, X_test_tfidf, y_train, y_test, vectorizer
+
+
