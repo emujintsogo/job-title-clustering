@@ -67,3 +67,23 @@ def prepare_data(df):
     return X_train_tfidf, X_test_tfidf, y_train, y_test, vectorizer
 
 
+"""Train and evaluate logistic regression model."""
+def train_classifier(X_train, y_train, X_test, y_test):
+    clf = LogisticRegression(max_iter=1000, class_weight="balanced", n_jobs=-1)
+    clf.fit(X_train, y_train)
+
+    y_pred = clf.predict(X_test)
+    print("\n=== Classification Report ===")
+    print(classification_report(y_test, y_pred))
+    return clf
+
+
+if __name__ == "__main__":
+    # load the labeled dataset 
+    labeled_df = load_labeled_data("../data/gpt_classified_job_descriptions.csv")
+
+    # split the data into training/test sets and create TF-IDF vectorizer
+    X_train_tfidf, X_test_tfidf, y_train, y_test, vectorizer = prepare_data(labeled_df)
+
+    # train the classifier on the training data
+    clf = train_classifier(X_train_tfidf, y_train, X_test_tfidf, y_test)
