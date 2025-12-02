@@ -10,3 +10,5 @@ Engineer_20230826.csv
 # Python bytecode
 __pycache__/
 *.pyc
+data/recombined_descriptions.csv
+data/model_classified_job_descriptions.csv
