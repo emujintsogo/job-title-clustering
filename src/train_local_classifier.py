@@ -1,5 +1,5 @@
 import pandas as pd
-import numpy as np
+import os
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics import classification_report, confusion_matrix, accuracy_score, f1_score
@@ -10,8 +10,7 @@ from xgboost import XGBClassifier
 import pickle
 import re
 from preprocessing import clean_text
-
-
+from config import BASE_DIR
 
 def prepare_features(df: pd.DataFrame, text_column: str, tfidf=None, fit=True):
     """Prepare TF-IDF feature matrix from text"""
@@ -100,7 +99,7 @@ def train_and_evaluate_models(X_train, X_val, y_train, y_val, label_encoder):
 def main():
     print("Loading labeled data...")
     # Load the GPT-classified dataset (our labeled training data)
-    df_labeled = pd.read_csv('../data/gpt_classified_job_descriptions.csv')
+    df_labeled = pd.read_csv(os.path.join(BASE_DIR, "data", "gpt_classified_job_descriptions.csv"))
     
     print(f"Total labeled records: {len(df_labeled)}")
     print(f"\nLabel distribution:")
@@ -152,16 +151,17 @@ def main():
     # Save the best model
     best_model = results[best_model_name]['model']
     
+
     print(f"\nSaving best model ({best_model_name}), vectorizer, and label encoder...")
-    with open('../models/best_classifier.pkl', 'wb') as f:
+    with open(os.path.join(BASE_DIR, "models", "best_classifier.pkl"), 'wb') as f:
         pickle.dump(best_model, f)
-    with open('../models/tfidf_vectorizer.pkl', 'wb') as f:
+    with open(os.path.join(BASE_DIR, "models", "tfidf_vectorizer.pkl"), 'wb') as f:
         pickle.dump(tfidf, f)
-    with open('../models/label_encoder.pkl', 'wb') as f:
+    with open(os.path.join(BASE_DIR, "models", "label_encoder.pkl"), 'wb') as f:
         pickle.dump(label_encoder, f)
     
     # Save model metadata
-    with open('../models/model_info.txt', 'w') as f:
+    with open(os.path.join(BASE_DIR, "models", "model_info.txt"), 'w') as f:
         f.write(f"Best Model: {best_model_name}\n")
         f.write(f"Accuracy: {results[best_model_name]['accuracy']:.4f}\n")
         f.write(f"F1 Score (Weighted): {results[best_model_name]['f1_weighted']:.4f}\n")
@@ -183,7 +183,8 @@ def main():
     print("\n" + "="*70)
     print("PREDICTING ON FULL DATASET")
     print("="*70)
-    df_full = pd.read_csv('../Engineer_20230826.csv')
+
+    df_full = pd.read_csv(os.path.join(BASE_DIR, "data", "Engineer_20230826.csv"))
     print(f"Full dataset size: {len(df_full)} job postings")
     
     # Exclude RequisitionIDs that were already classified by GPT
@@ -238,7 +239,7 @@ def main():
     })
     
     # Save predictions to new file
-    output_path = '../data/model_classified_job_descriptions.csv'
+    output_path = os.path.join(BASE_DIR, "data", "model_classified_job_descriptions.csv")
     predictions_df.to_csv(output_path, index=False)
     
     print(f"\nPredictions saved to {output_path}")

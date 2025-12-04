@@ -1,4 +1,6 @@
 import pandas as pd
+import os
+from config import BASE_DIR
 
 def recombine_job_descriptions(classified_csv_path: str, original_csv_path: str, output_csv_path: str):
     """
@@ -54,19 +56,18 @@ def recombine_job_descriptions(classified_csv_path: str, original_csv_path: str,
     return final_df
 
 if __name__ == "__main__":
-    # File paths
-    classified_csv_path = '../data/gpt_classified_job_descriptions.csv'
-    original_csv_path = '../Engineer_20230826.csv'
-    output_csv_path = '../data/recombined_gpt_descriptions.csv'
-    
-    gpt_classified_csv_path = '../data/gpt_classified_job_descriptions.csv'
+    # File paths    
+    original_csv_path = os.path.join(BASE_DIR, "data", "Engineer_20230826.csv")
+    output_csv_path = os.path.join(BASE_DIR, "data", "recombined_gpt_descriptions.csv")
+    gpt_classified_csv_path = os.path.join(BASE_DIR, "data", "gpt_classified_job_descriptions.csv")
+    model_classified_csv_path = os.path.join(BASE_DIR, "data", "model_classified_job_descriptions.csv")
+
     df_gpt = recombine_job_descriptions(
         classified_csv_path=gpt_classified_csv_path,
         original_csv_path=original_csv_path,
         output_csv_path=None  # Don't save individual file
     )
 
-    model_classified_csv_path = '../data/model_classified_job_descriptions.csv'
     df_model = recombine_job_descriptions(
         classified_csv_path=model_classified_csv_path,
         original_csv_path=original_csv_path,
@@ -74,15 +75,9 @@ if __name__ == "__main__":
     )
 
     df_combined = pd.concat([df_gpt, df_model], ignore_index=True)
-
-
-    # # For testing - Remove duplicates (in case any RequisitionIDs appear in both)
-    # print(f"Total rows before deduplication: {len(df_combined)}")
-    # df_combined = df_combined.drop_duplicates(subset=['RequisitionID'], keep='first')
-    # print(f"Total rows after deduplication: {len(df_combined)}")
+    df_combined = df_combined.drop_duplicates(subset=['RequisitionID'], keep='first')
     
     # Save combined output
-    output_csv_path = '../data/recombined_descriptions.csv'
     print(f"\nSaving combined data to {output_csv_path}...")
     df_combined.to_csv(output_csv_path, index=False)
     
