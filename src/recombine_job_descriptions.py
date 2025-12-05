@@ -58,7 +58,7 @@ def recombine_job_descriptions(classified_csv_path: str, original_csv_path: str,
 if __name__ == "__main__":
     # File paths    
     original_csv_path = os.path.join(BASE_DIR, "data", "Engineer_20230826.csv")
-    output_csv_path = os.path.join(BASE_DIR, "data", "recombined_gpt_descriptions.csv")
+    output_csv_path = os.path.join(BASE_DIR, "data", "all_prepared_job_postings.csv")
     gpt_classified_csv_path = os.path.join(BASE_DIR, "data", "gpt_classified_job_descriptions.csv")
     model_classified_csv_path = os.path.join(BASE_DIR, "data", "model_classified_job_descriptions.csv")
 
