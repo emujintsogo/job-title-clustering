@@ -14,6 +14,7 @@ from collections import Counter
 import re
 
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
@@ -22,6 +23,10 @@ import joblib
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# Quick and dirty way to remove capitalized words not at the start of the sentence
+# E.g. company names
+def remove_proper_nouns(text):
+    return re.sub(r"\b[A-Z][a-zA-Z]{3,}\b", "", text)
 
 def load_data(path):
     """Load job descriptions CSV."""
@@ -35,9 +40,22 @@ def load_data(path):
 def create_embeddings(descriptions, max_features=5000):
     """Create TF-IDF embeddings."""
     print(f"\n🔤 Creating TF-IDF embeddings...")
+
+    custom_stopwords = {
+    "experience", "work", "working", "must", "ability",
+    "requirements", "applicants", "eligible", "responsibilities",
+    "qualification", "skills", "you", "we", "team", 
+    "you", "your", "we", "our", "they", "their", "them"
+    "company", "organization", "opportunity", "services",
+    "candidate", "job", "apply", "role", "position",
+    "company","organization","services","team"
+    }
+    
+    stopwords = list(ENGLISH_STOP_WORDS.union(custom_stopwords))
+
     vectorizer = TfidfVectorizer(
         max_features=max_features,
-        stop_words='english',
+        stop_words=stopwords,
         ngram_range=(1, 2),
         min_df=2,
         max_df=0.95
@@ -47,9 +65,9 @@ def create_embeddings(descriptions, max_features=5000):
     return embeddings, vectorizer
 
 
-def find_optimal_k(embeddings, min_k=5, max_k=30, sample_size=1000):
+def find_optimal_k(embeddings, min_k=20, max_k=240, step=20, sample_size=1000):
     """Find optimal clusters using elbow + silhouette."""
-    print(f"\n🔍 Testing {min_k}-{max_k} clusters...")
+    print(f"\n🔍 Testing {min_k}-{max_k} clusters (step={step})...")
     
     # Sample for speed if dataset is large
     if len(embeddings) > sample_size:
@@ -61,7 +79,7 @@ def find_optimal_k(embeddings, min_k=5, max_k=30, sample_size=1000):
     
     inertias = []
     silhouettes = []
-    k_range = range(min_k, max_k + 1)
+    k_range = range(min_k, max_k + 1, step)
     
     for k in k_range:
         kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
@@ -122,38 +140,46 @@ def cluster_data(embeddings, n_clusters):
     return kmeans, labels
 
 
-def generate_labels(df, labels, n_clusters):
-    """Generate cluster labels from keywords."""
-    print(f"\n🏷️  Generating cluster labels...")
+def generate_labels(df, labels, n_clusters): 
+    """Generate cluster labels from keywords.""" 
+    print(f"\n🏷️ Generating cluster labels...") 
+
+    cluster_info = {} 
     
-    cluster_info = {}
+    for cid in range(n_clusters): 
+        # Get all descriptions in this cluster 
+        cluster_docs = df[labels == cid]['description'] 
+        text = ' '.join(cluster_docs.tolist()).lower() 
+
+        # Extract keywords 
+        text = re.sub(r'[^\w\s]', ' ', text) 
+        stop_words = {'the', 'and', 'or', 'for', 'with', 'from', 
+                      'this', 'that', 'will', 'are', 'has', 'have',
+                    'been', 'can', 'may', 'should', 
+                    "experience", "work", "working", "must", "ability",
+                    "requirements", "applicants", "eligible", "responsibilities",
+                    "qualification", "skills", "you", "we", "team", 
+                    "you", "your", "we", "our", "they", "their", "them"
+                    "company", "organization", "opportunity", "services",
+                    "candidate", "job", "apply", "role", "position",
+                    "company","organization","services","team"
+                    }
+        words = [w for w in text.split() if len(w) > 2 and w not in stop_words] 
+        top_words = [w for w, _ in Counter(words).most_common(5)] 
+        
+        # Create label 
+        label = ' '.join(top_words[:3]).title() 
+        if len(label) > 50: 
+            label = label[:47] + '...' 
     
-    for cid in range(n_clusters):
-        # Get all descriptions in this cluster
-        cluster_docs = df[labels == cid]['description']
-        text = ' '.join(cluster_docs.tolist()).lower()
+        cluster_info[cid] = {  
+            'cluster_id': cid, 
+            'label': label, 
+            'size': (labels == cid).sum(), 
+            'keywords': ', '.join(top_words) 
+        } 
         
-        # Extract keywords
-        text = re.sub(r'[^\w\s]', ' ', text)
-        stop_words = {'the', 'and', 'or', 'for', 'with', 'from', 'this', 'that',
-                     'will', 'are', 'has', 'have', 'been', 'can', 'may', 'should'}
-        words = [w for w in text.split() if len(w) > 2 and w not in stop_words]
-        top_words = [w for w, _ in Counter(words).most_common(5)]
-        
-        # Create label
-        label = ' '.join(top_words[:3]).title()
-        if len(label) > 50:
-            label = label[:47] + '...'
-        
-        cluster_info[cid] = {
-            'cluster_id': cid,
-            'label': label,
-            'size': (labels == cid).sum(),
-            'keywords': ', '.join(top_words)
-        }
-        
-        print(f"   Cluster {cid}: {label}")
-    
+        print(f" Cluster {cid}: {label}") 
     return cluster_info
 
 
@@ -247,9 +273,10 @@ if __name__ == "__main__":
     output_dir = os.path.join(BASE_DIR, "data", "k-means-clustering_results")
     
     # Clustering params
-    MIN_CLUSTERS = 5
-    MAX_CLUSTERS = 30
+    MIN_CLUSTERS = 20
+    MAX_CLUSTERS = 240
     MAX_FEATURES = 5000
+    STEP = 20
     
     print("=" * 70)
     print("JOB CLUSTERING")
@@ -257,13 +284,16 @@ if __name__ == "__main__":
     
     # Load data
     df = load_data(input_csv)
-    
+
+    # Remove proper nouns from the text (e.g. company names)
+    df['description'] = df['description'].apply(remove_proper_nouns)
+
     # Create embeddings
     embeddings, vectorizer = create_embeddings(df['description'], MAX_FEATURES)
     
     # Find optimal k
     optimal_k, k_range, inertias, silhouettes = find_optimal_k(
-        embeddings, MIN_CLUSTERS, MAX_CLUSTERS
+        embeddings, MIN_CLUSTERS, MAX_CLUSTERS, step=STEP
     )
     plot_metrics(k_range, inertias, silhouettes, optimal_k, output_dir)
     
