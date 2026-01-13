@@ -1,6 +1,6 @@
 # Break Through AI Final Project - Job Title Clustering
 
-A machine learning pipeline for analyzing and clustering job descriptions. The project classifies job posting sentences, trains local classifiers, and performs clustering and topic modeling on job descriptions.
+A machine learning pipeline for analyzing and clustering job descriptions, using a dataset of over 20,000 web-scraped job postings. The project classifies job posting sentences, trains local classifiers, and performs clustering and topic modeling on job descriptions.
 
 ## Features
 
