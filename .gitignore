@@ -14,4 +14,3 @@ __pycache__/
 # Model artifacts
 data/recombined_descriptions.csv
 data/model_classified_job_descriptions.csv
-data/recombined_gpt_descriptions.csv
