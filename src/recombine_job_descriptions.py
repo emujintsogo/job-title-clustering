@@ -1,6 +1,8 @@
 import pandas as pd
 import os
 from config import BASE_DIR
+import os
+from config import BASE_DIR
 
 def recombine_job_descriptions(classified_csv_path: str, original_csv_path: str, output_csv_path: str):
     """
@@ -22,7 +24,8 @@ def recombine_job_descriptions(classified_csv_path: str, original_csv_path: str,
     print(f"Label distribution:\n{df_classified['category'].value_counts()}\n")
     
     # Filter for only Description and Requirements
-    df_filtered = df_classified[df_classified['category'].isin(['Description', 'Requirements'])].copy()
+    # df_filtered = df_classified[df_classified['category'].isin(['Description', 'Requirements'])].copy()
+    df_filtered = df_classified[df_classified['category'].isin(['Description'])].copy()
     print(f"Sentences after filtering for Description/Requirements: {len(df_filtered)}")
     
     # Group by RequisitionID and combine sentences
